@@ -3,6 +3,7 @@
 
 #include <assert.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,6 +32,7 @@ void *VectorPop(Vector *vector);
 void VectorDelete(Vector *vector, int index);
 void VectorRemove(Vector *vector, void *item);
 int VectorFind(Vector *vector, void *item);
+void VectorDestroy(Vector *vector);
 void __VectorResize(Vector *vector, size_t new_capacity);
 
 void VectorInit(Vector *vector, size_t item_size, void (*dealloc_item)(void *),
@@ -96,6 +98,11 @@ void VectorDelete(Vector *vector, int index) {
 
     void *addr = (uint8_t *)vector->items + index * vector->item_size;
     void *end = (uint8_t *)vector->items + vector->size * vector->item_size;
+
+    if (vector->dealloc_item != NULL) {
+        vector->dealloc_item(addr);
+    }
+
     memmove(addr, (uint8_t *)addr + vector->item_size,
             (uint8_t *)end - (uint8_t *)addr);
     vector->size--;
@@ -126,6 +133,17 @@ void VectorPrint(Vector *vector) {
         vector->print_item((uint8_t *)vector->items + i * vector->item_size);
 }
 
+void VectorDestroy(Vector *vector) {
+    if (vector->dealloc_item) {
+        for (size_t i = 0; i < vector->size; i++) {
+            void *item = (uint8_t *)vector->items + i * vector->item_size;
+            vector->dealloc_item(item);
+        }
+    }
+
+    vector->size = 0;
+}
+
 void __VectorResize(Vector *vector, size_t new_capacity) {
     assert(new_capacity > vector->capacity);
 
@@ -134,35 +152,31 @@ void __VectorResize(Vector *vector, size_t new_capacity) {
     assert(vector->items != NULL);
 }
 
+// Printers
 void print_int(void *vp) { printf(" < %d > ", *(int *)vp); }
+void print_string(void *vp) {
+    char *str = *(char **)vp;
+    printf(" <'%s'> ", str);
+}
+
+void dealloc_string(void *vp) { free(*(char **)vp); }
 
 int main(int argc, char *argv[]) {
-    Vector numbers = {0};
-    VectorInit(&numbers, sizeof(int), NULL, print_int);
+    assert(argc > 1);
 
-    for (int n = 2; n < 20; n += 2)
-        VectorPush(&numbers, &n);
-    VectorPrint(&numbers);
-    printf("\n");
+    Vector arguments = {0};
+    VectorInit(&arguments, sizeof(char *), dealloc_string, print_string);
+    for (int i = 1; i < argc; i++) {
+        char *item = strdup(argv[i]);
+        VectorPush(&arguments, &item);
+    }
+    VectorPrint(&arguments);
 
-    int n = 3;
-    VectorPrepend(&numbers, &n);
-    VectorPrint(&numbers);
-    printf("\n");
-
-    int *p;
-    p = VectorPop(&numbers);
-    if (p != NULL)
-        printf("poped value:\n%d\n", *p);
-    VectorPrint(&numbers);
-    printf("\n");
-
-    VectorDelete(&numbers, 3);
-    VectorPrint(&numbers);
-    printf("\n");
-
-    n = 12;
-    printf("%d can be found at numbers[%d]\n", n, VectorFind(&numbers, &n));
+    printf("\nafter delete:\n");
+    // for (size_t i = 0; i < 5; i++)
+    // VectorDelete(&arguments, 2);
+    VectorDestroy(&arguments);
+    VectorPrint(&arguments);
 
     return 0;
 }
