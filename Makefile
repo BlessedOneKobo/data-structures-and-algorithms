@@ -1,5 +1,5 @@
-CFLAGS=-Wall -g
-# CFLAGS=-Wall -g -fsanitize=address -fno-omit-frame-pointer
+# CFLAGS=-Wall -g
+CFLAGS=-Wall -g -fsanitize=address -fno-omit-frame-pointer
 
 all: vector
 
