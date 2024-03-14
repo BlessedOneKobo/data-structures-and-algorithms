@@ -50,5 +50,9 @@ void VectorRemove(Vector *vector, void *item);
 // Find and return the first index of [item], return -1 if not found
 int VectorFind(Vector *vector, void *item);
 
+void VectorConcat(Vector *vector, Vector *other);
+
+void VectorPrint(Vector *vector);
+
 // Increase capacity
 void __VectorResize(Vector *vector, size_t capacity);

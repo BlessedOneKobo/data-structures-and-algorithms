@@ -36,14 +36,17 @@ void VectorPush(Vector *vector, void *item) {
     if (vector->size == vector->capacity)
         __VectorResize(vector, vector->capacity << 1);
 
-    void *addr = (uint8_t *)vector->items + vector->size++ * vector->itemSize;
+    void *addr = (uint8_t *)vector->items + vector->size * vector->itemSize;
     memcpy(addr, item, vector->itemSize);
+    vector->size++;
 }
 
 // Insert an [item] at [index], shifting the previous [index] and trailing
 // items to the right
 void VectorInsert(Vector *vector, size_t index, void *item) {
-    assert(index >= 0 && index < vector->size);
+    assert(index >= 0);
+    if (vector->size > 0)
+        assert(index < vector->size);
 
     if (vector->size == vector->capacity)
         __VectorResize(vector, vector->capacity << 1);
@@ -53,6 +56,7 @@ void VectorInsert(Vector *vector, size_t index, void *item) {
     memmove((uint8_t *)addr + vector->itemSize, addr,
             (uint8_t *)end - (uint8_t *)addr);
     memcpy(addr, item, vector->itemSize);
+    vector->size++;
 }
 
 // Insert an [item] at index 0
@@ -73,11 +77,18 @@ void VectorDelete(Vector *vector, size_t index) {
     assert(index >= 0 && index < vector->size);
 
     void *addr = (uint8_t *)vector->items + index * vector->itemSize;
-    void *end = (uint8_t *)vector->items + vector->size-- * vector->itemSize;
     if (vector->freeItem != NULL)
         vector->freeItem(addr);
+
+    if (index == vector->size - 1) {
+        VectorPop(vector);
+        return;
+    }
+
+    void *end = (uint8_t *)vector->items + vector->size * vector->itemSize;
     memmove(addr, (uint8_t *)addr + vector->itemSize,
             (uint8_t *)end - (uint8_t *)addr);
+	vector->size--;
 }
 
 // Remove all occurrences of [item]
@@ -94,11 +105,33 @@ void VectorRemove(Vector *vector, void *item) {
 int VectorFind(Vector *vector, void *item) {
     for (size_t i = 0, size = vector->size; i < size; i++) {
         void *addr = (uint8_t *)vector->items + i * vector->itemSize;
-        if (memcmp(addr, item, vector->itemSize))
+        if (memcmp(addr, item, vector->itemSize) == 0)
             return i;
     }
 
     return -1;
+}
+
+void VectorConcat(Vector *vector, Vector *other) {
+    assert(vector->itemSize == other->itemSize);
+
+    size_t newVectorSize = vector->size + other->size;
+    while (newVectorSize > vector->capacity) {
+        __VectorResize(vector, vector->capacity << 1);
+    }
+
+	void *addr = (uint8_t *)vector->items + vector->size * vector->itemSize;
+	memcpy(addr, other->items, other->size * other->itemSize);
+	vector->size = newVectorSize;
+}
+
+void VectorPrint(Vector *vector) {
+    assert(vector->printItem != NULL);
+
+    for (size_t i = 0; i < vector->size; i++) {
+        void *addr = (uint8_t *)vector->items + i * vector->itemSize;
+        vector->printItem(addr);
+    }
 }
 
 // Increase capacity
