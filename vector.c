@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Initialize Vector
 void VectorInit(Vector *vector, size_t itemSize, void (*freeItem)(void *),
                 void (*printItem)(void *)) {
     vector->size = 0;
@@ -15,23 +14,18 @@ void VectorInit(Vector *vector, size_t itemSize, void (*freeItem)(void *),
     assert(vector->items != NULL);
 }
 
-// Number of items in vector
 size_t VectorSize(Vector *vector) { return vector->size; }
 
-// Number of items that can be held by [vector]
 size_t VectorCapacity(Vector *vector) { return vector->capacity; }
 
-// Check if [vector] has any items
 bool VectorIsEmpty(Vector *vector) { return vector->size == 0; }
 
-// Returns the item at a given [index], fail if out of bounds
 void *VectorAt(Vector *vector, size_t index) {
     assert(index >= 0 && index < vector->size);
 
     return (uint8_t *)vector->items + index * vector->itemSize;
 }
 
-// Add an [item] to the end of [vector]
 void VectorPush(Vector *vector, void *item) {
     if (vector->size == vector->capacity)
         __VectorResize(vector, vector->capacity << 1);
@@ -41,8 +35,6 @@ void VectorPush(Vector *vector, void *item) {
     vector->size++;
 }
 
-// Insert an [item] at [index], shifting the previous [index] and trailing
-// items to the right
 void VectorInsert(Vector *vector, size_t index, void *item) {
     assert(index >= 0);
     if (vector->size > 0)
@@ -59,7 +51,6 @@ void VectorInsert(Vector *vector, size_t index, void *item) {
     vector->size++;
 }
 
-// Insert an [item] at index 0
 void VectorPrepend(Vector *vector, void *item) {
     if (vector->size == vector->capacity)
         __VectorResize(vector, vector->capacity << 1);
@@ -67,12 +58,10 @@ void VectorPrepend(Vector *vector, void *item) {
     VectorInsert(vector, 0, item);
 }
 
-// Remove an item from the end and return the value
 void *VectorPop(Vector *vector) {
     return (uint8_t *)vector->items + --vector->size * vector->itemSize;
 }
 
-// Delete the item at [index] and shift trailing items left
 void VectorDelete(Vector *vector, size_t index) {
     assert(index >= 0 && index < vector->size);
 
@@ -88,10 +77,9 @@ void VectorDelete(Vector *vector, size_t index) {
     void *end = (uint8_t *)vector->items + vector->size * vector->itemSize;
     memmove(addr, (uint8_t *)addr + vector->itemSize,
             (uint8_t *)end - (uint8_t *)addr);
-	vector->size--;
+    vector->size--;
 }
 
-// Remove all occurrences of [item]
 void VectorRemove(Vector *vector, void *item) {
     for (size_t i = 0; i < vector->size; i++) {
         void *addr = (uint8_t *)vector->items + i * vector->itemSize;
@@ -101,7 +89,6 @@ void VectorRemove(Vector *vector, void *item) {
     }
 }
 
-// Find and return the first index of [item], return -1 if not found
 int VectorFind(Vector *vector, void *item) {
     for (size_t i = 0, size = vector->size; i < size; i++) {
         void *addr = (uint8_t *)vector->items + i * vector->itemSize;
@@ -120,9 +107,9 @@ void VectorConcat(Vector *vector, Vector *other) {
         __VectorResize(vector, vector->capacity << 1);
     }
 
-	void *addr = (uint8_t *)vector->items + vector->size * vector->itemSize;
-	memcpy(addr, other->items, other->size * other->itemSize);
-	vector->size = newVectorSize;
+    void *addr = (uint8_t *)vector->items + vector->size * vector->itemSize;
+    memcpy(addr, other->items, other->size * other->itemSize);
+    vector->size = newVectorSize;
 }
 
 void VectorPrint(Vector *vector) {
@@ -134,7 +121,6 @@ void VectorPrint(Vector *vector) {
     }
 }
 
-// Increase capacity
 void __VectorResize(Vector *vector, size_t newCapacity) {
     vector->items = realloc(vector->items, newCapacity * vector->itemSize);
     vector->capacity = newCapacity;

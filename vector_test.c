@@ -41,6 +41,7 @@ void can_increase_capacity() {
     assert(*((int *)VectorAt(&numbers, 4)) == 4);
     assert(VectorSize(&numbers) == 10);
     assert(VectorCapacity(&numbers) > VECTOR_INITIAL_CAPACITY);
+
     printf("...OK\n");
 }
 
